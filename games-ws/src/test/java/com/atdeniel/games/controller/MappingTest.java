@@ -2,7 +2,7 @@ package com.atdeniel.games.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.atdeniel.games.domain.GameRequest;
+import com.atdeniel.games.domain.ArtistRequest;
 import org.dozer.Mapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,7 +22,7 @@ public class MappingTest {
 	@Test
 	public void fromRequestToEntity() {
 		Dev c = new Dev(1L, "John", "Doe", "+57 312 222 3344", "john@sinbugs.com");
-		GameRequest req = mapper.map(c, GameRequest.class);
+		ArtistRequest req = mapper.map(c, ArtistRequest.class);
 		
 		assertThat(req)
 			.hasFieldOrPropertyWithValue("id", c.getId())

@@ -1,6 +1,6 @@
 package com.atdeniel.games.domain;
 
-public class GameRequest {
+public class ArtistResponse {
 
 	private Long id;
 	private String firstName;

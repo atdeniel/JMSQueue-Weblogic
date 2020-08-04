@@ -1,5 +1,5 @@
 package com.atdeniel.games.jms.queue.services.impl;
-import com.atdeniel.games.dao.GameRepository;
+import com.atdeniel.games.dao.ArtistRepository;
 import com.atdeniel.games.dto.Dev;
 import com.atdeniel.games.jms.queue.services.GetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class GetImpl implements MessageListener, GetService {
     private boolean queueUp = false;
 
     @Autowired
-    GameRepository dao;
+    ArtistRepository dao;
 
     /**
      * Message listener interface.
@@ -60,9 +60,9 @@ public class GetImpl implements MessageListener, GetService {
             System.out.println("Message Received: "+ msgText );
             mensajes.add("Message Received: "+ msgText);
 
-            Dev dev = new Dev();
+            /*Dev dev = new Dev();
             dev.setFirstName("GG");
-            dao.saveAndFlush(dev);
+            dao.saveAndFlush(dev);*/
 
             if (msgText.equalsIgnoreCase("quit")) {
                 synchronized(this) {
