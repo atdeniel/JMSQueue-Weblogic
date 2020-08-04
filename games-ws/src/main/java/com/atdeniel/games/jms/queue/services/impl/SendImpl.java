@@ -1,5 +1,8 @@
-package com.atdeniel.games.jms.queue;
+package com.atdeniel.games.jms.queue.services.impl;
 
+import com.atdeniel.games.jms.queue.services.SendService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -20,15 +23,21 @@ import javax.naming.NamingException;
  * @author Copyright (c) 1999-2005 by BEA Systems, Inc. All Rights Reserved.
  */
 @Service
-public class Send
+@PropertySource("classpath:/application.properties")
+public class SendImpl implements SendService
 {
-    public final static String SERVER="t3://localhost:7001/";
+	// Defines Server location
+	@Value("${server}")
+	private String SERVER ;
 	// Defines the JNDI context factory.
-	public final static String JNDI_FACTORY="weblogic.jndi.WLInitialContextFactory";
+	@Value("${jndi.factory}")
+	private String JNDI_FACTORY ;
 	// Defines the JMS context factory.   JNDI name for connection factory we can give any name
-	public final static String JMS_FACTORY="FabricaJNDI";
+	@Value("${jms.factory}")
+	private String JMS_FACTORY;
 	// Defines the queue.  JNDI name for Queue . Queue is for one to one communication
-	public final static String QUEUE="MiColaJNDI";
+	@Value("${queue}")
+	private String QUEUE;
 
 	//Connection factory and Queue are within JMS module, sender and reciever have to go thorough Jms module.they cannot talk to jms server directly
 	//JMS server uses connection factory in order to communicate jms server with file store.
@@ -42,6 +51,7 @@ public class Send
 	private QueueSender qsender;
 	private Queue queue;
 	private TextMessage msg;
+	private Boolean queueUp = false;
 
 	/**
 	 * Creates all the necessary objects for sending
@@ -61,6 +71,7 @@ public class Send
 		qsender = qsession.createSender(queue);
 		msg = qsession.createTextMessage();
 		qcon.start();
+		queueUp = true;
 	}
 
 	/**
@@ -69,7 +80,11 @@ public class Send
 	 * @param message  message to be sent
 	 * @exception JMSException if JMS fails to send message due to internal error
 	 */
-	public void send(String message) throws JMSException {
+	public void sendData(String message) throws JMSException, NamingException {
+		if (!queueUp) {
+			InitialContext ic = getInitialContext();
+			init(ic);
+		}
 		msg.setText(message);
 		qsender.send(msg);
 	}
@@ -83,29 +98,17 @@ public class Send
 		qsession.close();
 		qcon.close();
 	}
-	/** main() method.
-	 *
-	 * @param args WebLogic Server URL
-	 * @exception Exception if operation fails
-	 */
-	public static void main(String[] args) throws Exception {
-		/*args[0] = new String();
-		args[0] = "t3://localhost:7001/";
-		if (args.length != 1) {
-			System.out.println("Usage: java examples.jms.queue.QueueSend WebLogicURL");
-			return;
-		}*/
-		//InitialContext ic = getInitialContext(args[0]);
-		InitialContext ic = getInitialContext();
-		Send qs = new Send();
-		qs.init(ic);
-		readAndSend(qs);
-		qs.close();
-	}
 
-	private static void readAndSend(Send qs)
-			throws IOException, JMSException
-	{
+	/**
+	 * Read and send to WebLogic Queue
+	 *
+	 * @param qs
+	 * @throws IOException
+	 * @throws JMSException
+	 * @throws NamingException
+	 */
+	private static void readAndSend(SendImpl qs)
+			throws IOException, JMSException, NamingException {
 		BufferedReader msgStream = new BufferedReader(new InputStreamReader(System.in));
 		String line=null;
 		boolean quitNow = false;
@@ -113,7 +116,7 @@ public class Send
 			System.out.print("Enter message (\"quit\" to quit): \n");
 			line = msgStream.readLine();
 			if (line != null && line.trim().length() != 0) {
-				qs.send(line);
+				qs.sendData(line);
 				System.out.println("JMS Message Sent: "+line+"\n");
 				quitNow = line.equalsIgnoreCase("quit");
 			}
@@ -121,8 +124,13 @@ public class Send
 
 	}
 
+	/**
+	 * Return the InitialContext
+	 * @return InitialContext
+	 * @throws NamingException
+	 */
 
-	public static InitialContext getInitialContext()
+	public  InitialContext getInitialContext()
 			throws NamingException
 	{
 		Hashtable env = new Hashtable();
@@ -131,5 +139,3 @@ public class Send
 		return new InitialContext(env);
 	}
 }
-
-/*Right click on this file and go to properties than click run-debug setting and give the address where weblogic is running  */

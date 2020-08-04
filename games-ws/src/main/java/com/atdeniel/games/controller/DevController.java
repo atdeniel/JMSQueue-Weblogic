@@ -1,13 +1,14 @@
-package com.atdeniel.games.api;
+package com.atdeniel.games.controller;
 
 import javax.jms.JMSException;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.validation.Valid;
 
+import com.atdeniel.games.domain.GameRequest;
+import com.atdeniel.games.domain.GameResponse;
+import com.atdeniel.games.jms.queue.services.SendService;
 import com.atdeniel.games.service.GameService;
-import com.atdeniel.games.jms.queue.Get;
-import com.atdeniel.games.jms.queue.Send;
+import com.atdeniel.games.jms.queue.services.impl.GetImpl;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,16 +24,17 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 @RestController
-public class GameApi {
+@RequestMapping(value = "/developers")
+public class DevController {
 	
 	@Autowired
 	GameService gameService;
 
 	@Autowired
-	Get get;
+	GetImpl getImpl;
 
 	@Autowired
-	Send send;
+	SendService sendService;
 
 	@Autowired
 	Mapper mapper;
@@ -45,45 +47,40 @@ public class GameApi {
 	    
 	    return gameResponse;
 	}
-	
-	@RequestMapping(value="/send", method=RequestMethod.GET)
-	public Dev getById() throws JMSException, IOException, NamingException {
 
-		Dev dev = new Dev(1L,
+
+	//curl -X POST localhost:8080/developers/send -H 'Content-type:application/text' -d 'Name'
+	// then and important send 'quit' when you stop sending msgs
+	//curl -X POST localhost:8080/developers/send -H 'Content-type:application/text' -d 'quit'
+
+	@RequestMapping(value="/send", method=RequestMethod.POST)
+	public String send(@RequestBody String data) throws JMSException, IOException, NamingException {
+
+		/*Dev dev = new Dev(1L,
 				"Atdeniel",
 				"Git",
 				"+57 311 222 3344",
-				"1@git.com");
-
-		InitialContext ic = send.getInitialContext();
-		send.init(ic);
+				"1@git.com");*/
 
 		BufferedReader msgStream = new BufferedReader(new InputStreamReader(System.in));
-		String line = dev.toString();
+		String line = data;
 		if (line != null && line.trim().length() != 0) {
-			send.send(line);
-			send.send("123");
-			send.send("ola k ase");
-			send.send("quit");
+			sendService.sendData(data);
 		}
 
 
-		return dev;
+		return "Inserted to WL Queue.";
 	}
 
 	@RequestMapping(value="/get", method=RequestMethod.GET)
-	public String getById2() throws JMSException, IOException, NamingException {
+	public String get() throws JMSException, IOException, NamingException {
 
-		//Get get=new Get();
-		InitialContext ic = get.getInitialContext();
-		get.init(ic);
-		ArrayList<String> mensajes = get.obtenerCola(get);
+		ArrayList<String> mensajes = getImpl.getQueue(getImpl);
 		String pilaMensajes = "Mensaje recibido: ";
 
 		for (String mensaje:mensajes){
 			pilaMensajes = pilaMensajes + mensaje + " \n\t";
 		}
-
 
 		return pilaMensajes;
 	}

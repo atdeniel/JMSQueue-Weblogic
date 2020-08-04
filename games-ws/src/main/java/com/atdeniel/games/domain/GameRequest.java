@@ -1,6 +1,6 @@
-package com.atdeniel.games.api;
+package com.atdeniel.games.domain;
 
-public class GameResponse {
+public class GameRequest {
 
 	private Long id;
 	private String firstName;

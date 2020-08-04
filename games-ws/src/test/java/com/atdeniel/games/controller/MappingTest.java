@@ -1,7 +1,8 @@
-package com.atdeniel.games.api;
+package com.atdeniel.games.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.atdeniel.games.domain.GameRequest;
 import org.dozer.Mapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;

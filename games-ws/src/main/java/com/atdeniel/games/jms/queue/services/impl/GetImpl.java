@@ -1,9 +1,10 @@
-package com.atdeniel.games.jms.queue;
+package com.atdeniel.games.jms.queue.services.impl;
 import com.atdeniel.games.dao.GameRepository;
 import com.atdeniel.games.dto.Dev;
-import com.atdeniel.games.service.GameService;
+import com.atdeniel.games.jms.queue.services.GetService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,16 +15,21 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 @Service
-public class Get implements MessageListener{
+@PropertySource("classpath:/application.properties")
+public class GetImpl implements MessageListener, GetService {
 
     // Defines Server location
-    public final static String SERVER="t3://localhost:7001/";
+    @Value("${server}")
+    private String SERVER ;
     // Defines the JNDI context factory.
-    public final static String JNDI_FACTORY="weblogic.jndi.WLInitialContextFactory";
+    @Value("${jndi.factory}")
+    private String JNDI_FACTORY ;
     // Defines the JMS context factory.   JNDI name for connection factory we can give any name
-    public final static String JMS_FACTORY="FabricaJNDI";
+    @Value("${jms.factory}")
+    private String JMS_FACTORY;
     // Defines the queue.  JNDI name for Queue . Queue is for one to one communication
-    public final static String QUEUE="MiColaJNDI";
+    @Value("${queue}")
+    private String QUEUE;
 
     private QueueConnectionFactory qconFactory;
     private QueueConnection qcon;
@@ -32,6 +38,7 @@ public class Get implements MessageListener{
     private Queue queue;
     private boolean quit = false;
     private static ArrayList mensajes = new ArrayList<String>();
+    private boolean queueUp = false;
 
     @Autowired
     GameRepository dao;
@@ -96,27 +103,21 @@ public class Get implements MessageListener{
         qsession.close();
         qcon.close();
     }
-    /**
-     * main() method.
-     *
-     * @param args  WebLogic Server URL
-     * @exception  Exception if execution fails
-     */
-    public static void main(String[] args) throws Exception {
-        /*if (args.length != 1) {
-            System.out.println("Usage: java examples.jms.queue.QueueReceive WebLogicURL");
-            return;
-        }*/
-        InitialContext ic = getInitialContext();
-        Get qr = new Get();
-        qr.init(ic);
-        System.out.println(
-                "JMS Ready To Receive Messages (To quit, send a \"quit\" message).");
-        // Wait until a "quit" message has been received.
-        obtenerCola(qr);
-    }
 
-    public static ArrayList obtenerCola(Get qr) throws JMSException {
+    /**
+     * Get Queue from WebLogic
+     * @param qr
+     * @return list of msgs
+     * @throws JMSException
+     * @throws NamingException
+     */
+    public ArrayList getQueue(GetImpl qr) throws JMSException, NamingException {
+
+        if (!queueUp) {
+            InitialContext ic = getInitialContext();
+            init(ic);
+        }
+
         synchronized(qr) {
             while (! qr.quit) {
                 try {
@@ -128,7 +129,12 @@ public class Get implements MessageListener{
         return mensajes;
     }
 
-    public static InitialContext getInitialContext()
+    /**
+     * Return the InitialContext
+     * @return InitialContext
+     * @throws NamingException
+     */
+    public InitialContext getInitialContext()
             throws NamingException
     {
         Hashtable env = new Hashtable();

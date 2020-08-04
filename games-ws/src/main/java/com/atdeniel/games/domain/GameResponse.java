@@ -1,10 +1,6 @@
-package com.atdeniel.games.api;
+package com.atdeniel.games.domain;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-
-public class GameRequest {
+public class GameResponse {
 
 	private Long id;
 	private String firstName;
